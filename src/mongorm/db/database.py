@@ -2,9 +2,11 @@
 Created on Feb 22, 2012
 
 @requires: pyMongo (pip install pymongo)
+@requires: py-utils (https://github.com/benjdezi/Python-Utils)
 @author: Benjamin Dezile
 '''
 
+from pyutils.utils.config import Config
 import pymongo as Mongo
 import time
 
@@ -34,7 +36,7 @@ class Database:
     db = None
     
     @classmethod
-    def get_instance(cls, host, port, model, db_name=None, user=None, pwd=None):
+    def get_instance(cls, host, port=None, db_name=None, user=None, pwd=None):
         ''' Get a connection to a database instance 
         host:      Server address
         port:      Server port
@@ -43,7 +45,7 @@ class Database:
         user:      User name
         pwd:       Password
         '''
-        cls.config = { 'host': host, 'port': port, 'model': model }
+        cls.config = { 'host': host, 'port': port, 'model': Config.get("model") }
         return cls._get_db(db_name, user, pwd)
     
     @classmethod
