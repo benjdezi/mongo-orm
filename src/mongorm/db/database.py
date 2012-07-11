@@ -2,12 +2,9 @@
 Created on Feb 22, 2012
 
 @requires: pyMongo (pip install pymongo)
-@requires: py-utils (https://github.com/benjdezi/Python-Utils)
 @author: Benjamin Dezile
 '''
 
-#from pyutils.utils.logging import Logger
-#from pyutils.utils.config import Config
 import pymongo as Mongo
 import time
 
