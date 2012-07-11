@@ -45,7 +45,7 @@ class Database:
         user:      User name
         pwd:       Password
         '''
-        cls.config = { 'host': host, 'port': port, 'model': Config.get("model") }
+        cls.config = { 'host': host, 'port': port }
         return cls._get_db(db_name, user, pwd)
     
     @classmethod
@@ -84,7 +84,7 @@ class Database:
     def build_indexes(cls):
         ''' Build indexes '''
         print "Building indexes"
-        model = cls.config['model']
+        model = Config.get("model")
         for class_name in model.keys():
             fields = model[class_name]["fields"]
             for field_name in fields.keys():
