@@ -22,21 +22,23 @@ class QueryMonitor(object):
         self.name = query_name
         
     def __enter__(self):
-        self.start_time = time()
+        if Database.query_logging is True:
+            self.start_time = time()
         
     def __exit__(self, t, value, tb):
-        if t is not None:
-            pass # Exception occurred
-        self.inst._clean()
-        dt = (time() - self.start_time) * 1000
-        extra = list()
-        if self.inst.distinct_field:
-            extra.append("distinct %s" % self.inst.distinct_field)
-        if self.inst.order_field:
-            extra.append("sort by %s" % self.inst.order_field)
-        if self.inst.lim:
-            extra.append("lim=%d" % self.inst.lim)
-        print "Query: %s %s%s in %.2f ms" % (self.name, "(%s) " % ", ".join(extra) if extra else "", self.inst.col_name, dt)
+        if Database.query_logging is True:
+            if t is not None:
+                pass # Exception occurred
+            self.inst._clean()
+            dt = (time() - self.start_time) * 1000
+            extra = list()
+            if self.inst.distinct_field:
+                extra.append("distinct %s" % self.inst.distinct_field)
+            if self.inst.order_field:
+                extra.append("sort by %s" % self.inst.order_field)
+            if self.inst.lim:
+                extra.append("lim=%d" % self.inst.lim)
+            print "Query: %s %s%s in %.2f ms" % (self.name, "(%s) " % ", ".join(extra) if extra else "", self.inst.col_name, dt)
 
 
 ASCENDING = pymongo.ASCENDING

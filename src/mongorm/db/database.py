@@ -2,30 +2,13 @@
 Created on Feb 22, 2012
 
 @requires: pyMongo (pip install pymongo)
-@requires: py-utils (https://github.com/benjdezi/Python-Utils)
 @author: Benjamin Dezile
 '''
 
-from pyutils.utils.config import Config
 import pymongo as Mongo
-import time
 
 DEFAULT_PORT = 27017
-
-def query_logging(f):
-    ''' Decorator for query logging '''
-    def new_f(*kargs, **kwargs):
-        if Database.query_logging is True:
-            start_time = time.time()
-            res = f(*kargs, **kwargs)
-            dt = round((time.time() - start_time) * 1000, 2)
-            query_type = f.__name__
-            col_name = kargs[1]
-            print "Query: %s %s in %s ms" % (query_type, col_name, dt)
-            return res
-        else:
-            return f(*kargs, **kwargs)
-    return new_f
+DEFAULT_HOST = "localhost"
 
 class Database:
     ''' MongoDB wrapper for database access '''
@@ -57,7 +40,7 @@ class Database:
     def _get_connection(cls):
         ''' Establish connection to the database '''
         if not cls.connection:
-            host = cls.config['host']
+            host = cls.config.get('host', DEFAULT_HOST)
             port = cls.config.get('port', DEFAULT_PORT)
             cls.connection = Mongo.Connection(host, port)
             print "Connected to MongoDB @ %s:%s" % (host, port)
@@ -81,12 +64,11 @@ class Database:
         return db[name]
         
     @classmethod
-    def build_indexes(cls):
+    def build_indexes(cls, model_config):
         ''' Build indexes '''
         print "Building indexes"
-        model = Config.get("model")
-        for class_name in model.keys():
-            fields = model[class_name]["fields"]
+        for class_name in model_config.keys():
+            fields = model_config[class_name]["fields"]
             for field_name in fields.keys():
                 index = fields[field_name].get("index", None)
                 if index:

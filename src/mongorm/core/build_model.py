@@ -9,25 +9,24 @@ found in config/model.yml
 '''
 
 from cStringIO import StringIO
-from pyutils.utils.config import Config
-from pyutils.utils.helpers import get_python_dir, camel_to_py_case
+from pyutils.utils.helpers import camel_to_py_case
 from mongorm.db.database import Database
 import os
 import datetime
 import traceback
-
-BASE_CLASS_PATH = get_python_dir() + "/model/base" 
+ 
 BASE_TYPES = ("int", "str", "float", "long", "bool", "list", "dict")
 
 def generate_htag(data):
+    ''' Generate a hash tag for the given data '''
     h = hash(data)
     return hex(h).strip('0x')
 
-def build_model_class(class_name, class_info, overwrite=False):
+def build_model_class(class_path, class_name, class_info, overwrite=False):
     ''' Build the model class file for a given class '''
     
-    filename = "base_" + camel_to_py_case(class_name) + ".py" 
-    filepath = os.path.join(BASE_CLASS_PATH, filename)
+    filename = "base_%s.py" % camel_to_py_case(class_name) 
+    filepath = os.path.join(class_path, filename)
     
     old_htag = None
     if os.path.exists(filepath):
@@ -57,7 +56,7 @@ def build_model_class(class_name, class_info, overwrite=False):
     root_class = "Serializable" if is_emb else "BaseObject"
     
     buf.write("#tag: %s\n\n")
-    buf.write("from model.core.base_object import " + root_class + "\n")
+    buf.write("from mongorm.core.base_object import " + root_class + "\n")
     buf.write("{{other_imports}}\n")
     buf.write("class Base" + class_name + "(" + root_class + "):\n")
     buf.write("\n")
@@ -68,8 +67,8 @@ def build_model_class(class_name, class_info, overwrite=False):
         buf.write("    def __init__(self):\n")
         buf.write("        Serializable.__init__(self)\n")
     else:
-        buf.write("    def __init__(self, isNew = False):\n")
-        buf.write("        BaseObject.__init__(self, isNew, " + ("True" if is_ts else "False") + ", " + ("True" if is_sd else "False") + ")\n")
+        buf.write("    def __init__(self, is_new = False):\n")
+        buf.write("        BaseObject.__init__(self, is_new, " + ("True" if is_ts else "False") + ", " + ("True" if is_sd else "False") + ")\n")
     for field in field_names:
         default_val = fields[field].get("default", None)
         if type(default_val) == str:
@@ -139,13 +138,14 @@ def build_model_class(class_name, class_info, overwrite=False):
 
 def _make_getter_code(field_name):
     ''' Generate the code for the getter of the given field '''
-    code = "    def get" + (field_name[0:1].upper() + field_name[1:]) + "(self):\n"
+    code = "    def get_" + camel_to_py_case(field_name) + "(self):\n"
     code += "        return self." + field_name + "\n\n"
     return code
 
 def _make_setter_code(field_name, field_info):
+    ''' Generate the code for the setter for the given field '''
     field_type = field_info.get('type', None)
-    code = "    def set" + (field_name[0:1].upper() + field_name[1:]) + "(self, val):\n"
+    code = "    def set_" + camel_to_py_case(field_name) + "(self, val):\n"
     if field_type:
         # Enforce type constraint
         sub_type = None
@@ -171,12 +171,12 @@ def _make_relational_getter_code(relation_name, relation_info):
     if foreign_rel_name == "id":
         foreign_rel_name = "_id"
     local_rel_name = relation_info["local"] 
-    code = "    def get" + (relation_name[0].upper() + relation_name[1:]) + "(self):\n"
-    code += "        ref = self.get" + local_rel_name[0].upper() + local_rel_name[1:] + "()\n"
+    code = "    def get_" + camel_to_py_case(relation_name) + "(self):\n"
+    code += "        ref = self.get_" + camel_to_py_case(local_rel_name) + "()\n"
     if relation_info.get("multi", False):
-        code += "        return self._getRelatedArray('%s', ref, '%s')" % (cls_name, foreign_rel_name)
+        code += "        return self._get_related_array('%s', ref, '%s')" % (cls_name, foreign_rel_name)
     else:
-        code += "        return self._getRelated('%s', ref, '%s')" % (cls_name, foreign_rel_name)
+        code += "        return self._get_related('%s', ref, '%s')" % (cls_name, foreign_rel_name)
     code += "\n\n"
     return code
 
@@ -187,45 +187,48 @@ def _make_relational_setter_code(relation_name, relation_info):
         foreign_rel_name = "_id"
     local_rel_name = relation_info["local"]
     multi = relation_info.get("multi", False) 
-    code = "    def set" + (relation_name[0].upper() + relation_name[1:]) + "(self, obj" + ("s" if multi else "") + "):\n"
+    code = "    def set_" + camel_to_py_case(relation_name) + "(self, obj" + ("s" if multi else "") + "):\n"
     if multi:
-        code += "        return self._setRelatedArray(objs, '%s', '%s')" % (local_rel_name, foreign_rel_name)
+        code += "        return self._set_related_array(objs, '%s', '%s')" % (local_rel_name, foreign_rel_name)
     else:
-        code += "        return self._setRelated(obj, '%s', '%s')" % (local_rel_name, foreign_rel_name)
+        code += "        return self._set_related(obj, '%s', '%s')" % (local_rel_name, foreign_rel_name)
     code += "\n\n"
     return code
 
 
 if __name__ == "__main__":
     
+    from pyutils.utils.config import ConfigParser
     import time
     import sys
     
-    over_write = "--force" in sys.argv
+    model_file = sys.argv[sys.argv.index('-m') + 1]
+    class_path = sys.argv[sys.argv.index('-p') + 1]
     
+    over_write = "--force" in sys.argv
     if over_write:
         print "WARNING: override enabled"
     
     # Build model from config
     start_time = time.time()
     
-    model = Config.get("model")
+    model = ConfigParser().parse(model_file).get()
     print "Building model"
     
     filenames = dict()
     for cls_name in model.keys():
-        file_name = build_model_class(cls_name, model.get(cls_name), over_write)
+        file_name = build_model_class(class_path, cls_name, model.get(cls_name), over_write)
         filenames[file_name] = True
         
     # Clean old file
     print "Cleaning up"
-    for filename in os.listdir(BASE_CLASS_PATH):
+    for filename in os.listdir(class_path):
         if filename.find("__") < 0 and not filenames.has_key(filename):
-            os.remove(os.path.join(BASE_CLASS_PATH, filename))
+            os.remove(os.path.join(class_path, filename))
             print "Deleted %s" % filename
             
     # Ensure indexes
-    Database.build_indexes()
+    Database.build_indexes(model)
         
     print "Built model in %.3f seconds" % (time.time() - start_time)
 
