@@ -10,6 +10,10 @@ import pymongo as Mongo
 DEFAULT_PORT = 27017
 DEFAULT_HOST = "localhost"
 
+class DBInitError(Exception):
+    ''' Raised when trying to use the DB wrapper without proper initialization '''
+    pass
+
 class Database:
     ''' MongoDB wrapper for database access '''
     
@@ -19,8 +23,9 @@ class Database:
     db = None
     
     @classmethod
-    def get_instance(cls, host, port=None, db_name=None, user=None, pwd=None):
+    def get_instance(cls, **params):
         ''' Get a connection to a database instance 
+        Possible parameters:
         host:      Server address
         port:      Server port
         model:     Data model config map
@@ -28,34 +33,54 @@ class Database:
         user:      User name
         pwd:       Password
         '''
+        host = params.get('host', DEFAULT_HOST)
+        port = params.get('port', DEFAULT_PORT)
+        db_name = params.get('db_name')
+        user = params.get('user', None)
+        pwd = params.get('pwd', None)
         cls.config = { 'host': host, 'port': port }
-        return cls._get_db(db_name, user, pwd)
+        if cls.connection:
+            # Close existing connection
+            cls.connection.close()
+        return cls._init_db(db_name, user, pwd)
     
     @classmethod
-    def enable_query_logging(cls, state):
+    def enable_query_logging(cls, is_enabled=True):
         ''' Enable or disable query logging '''
-        cls.query_logging = state
+        cls.query_logging = is_enabled
     
     @classmethod
-    def _get_connection(cls):
-        ''' Establish connection to the database '''
-        if not cls.connection:
-            host = cls.config.get('host', DEFAULT_HOST)
-            port = cls.config.get('port', DEFAULT_PORT)
-            cls.connection = Mongo.Connection(host, port)
-            print "Connected to MongoDB @ %s:%s" % (host, port)
+    def _init_connection(cls):
+        ''' Establish connection to the database server '''
+        host = cls.config['host']
+        port = cls.config['port']
+        cls.connection = Mongo.Connection(host, port)
+        print "Connected to MongoDB @ %s:%s" % (host, port)
         return cls.connection
     
     @classmethod    
-    def _get_db(cls, db_name, db_user, db_pwd):
-        ''' Create a database instance if not already existing '''
-        if not cls.db:
-            conn = cls._get_connection()
-            cls.db = conn[db_name]
-            if db_user and db_pwd:
-                cls.db.authenticate(db_user, db_pwd)
-            print "Using database %s" % db_name
+    def _init_db(cls, db_name, db_user, db_pwd):
+        ''' Connect to the server and get a database object '''
+        conn = cls._init_connection()
+        cls.db = conn[db_name]
+        if db_user and db_pwd:
+            cls.db.authenticate(db_user, db_pwd)
+        print "Using database %s" % db_name
         return cls.db
+    
+    @classmethod
+    def _get_db(cls):
+        ''' Return the current database object '''
+        if not cls.db:
+            raise DBInitError()
+        return cls.db
+    
+    @classmethod
+    def _get_connection(cls):
+        ''' Return the current connection object '''
+        if not cls.connection:
+            raise DBInitError()
+        return cls.connection
     
     @classmethod
     def _get_collection(cls, name):
@@ -67,17 +92,22 @@ class Database:
     def build_indexes(cls, model_config):
         ''' Build indexes '''
         print "Building indexes"
+        
         for class_name in model_config.keys():
+            
             fields = model_config[class_name]["fields"]
             for field_name in fields.keys():
+                
                 index = fields[field_name].get("index", None)
                 if index:
+                    
                     col = cls._get_collection(class_name)
                     index_type = Mongo.ASCENDING
                     if index == -1:
                         index_type = Mongo.DESCENDING
                     elif index == "2d":
                         index_type = Mongo.GEO2D
+                    
                     col.ensure_index([(field_name, index_type)])
                     print "Ensured index %s for %s.%s" % (index_type, class_name, field_name)
         

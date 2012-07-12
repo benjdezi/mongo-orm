@@ -106,7 +106,7 @@ class Serializable(object):
         ''' Return a copy of this object '''
         d = self.toDict()
         cls = self.__class__
-        o = cls.fromDict(d, True)
+        o = cls.from_dict(d, True)
         return o
     
     def to_dict(self):
@@ -152,14 +152,14 @@ class Serializable(object):
                 # Embedded object
                 cls_name = d[k][Serializable.CLASS_KEY]
                 clazz = eval("%s" % cls_name)
-                inst.__setattr__(_name, clazz.fromDict(d[k]))
+                inst.__setattr__(_name, clazz.from_dict(d[k]))
             elif _t is list and len(d[k]) > 0 and type(d[k][0]) is dict and d[k][0].has_key(Serializable.CLASS_KEY):
                 # List of objects
                 cls_name = d[k][0][Serializable.CLASS_KEY]
                 clazz = eval("%s" % cls_name)
                 l = list()
                 for item in d[k]:
-                    l.append(clazz.fromDict(item))
+                    l.append(clazz.from_dict(item))
                 inst.__setattr__(_name, l)
             elif _t is str:
                 # String value
@@ -318,7 +318,7 @@ class BaseObject(BasePersistentObject):
         setter = getattr(self, "set%s" % (relation_name[0].upper() + relation_name[1:]))
         setter(ref)
         
-    def _get_relatedArray(self, related_cls_name, values, relation_name=ID_ALIAS):
+    def _get_related_array(self, related_cls_name, values, relation_name=ID_ALIAS):
         ''' Fetch an array of related objects 
         related_cls_name:     Name of the class that is referenced
         values:               Reference values
@@ -328,15 +328,15 @@ class BaseObject(BasePersistentObject):
             return None
         related_cls = _get_class_from_name(related_cls_name)
         q = Query(related_cls)
-        q.whereIn(relation_name, values)
+        q.where_in(relation_name, values)
         res = q.execute()
         if res and res.count() > 0:
             objs = list()
             for item in res:
-                objs.append(related_cls.fromDict(item))
+                objs.append(related_cls.from_dict(item))
             return objs
     
-    def _set_relatedArray(self, related_objs, relation_name, foreign_relation_name=ID_ALIAS):
+    def _set_related_array(self, related_objs, relation_name, foreign_relation_name=ID_ALIAS):
         ''' Set a relation array 
         related_objs:             Related object instances
         relation_name:            Local parameter used for the relation
@@ -425,7 +425,7 @@ class BaseObject(BasePersistentObject):
         if hydrate and objs:
             hydrated_objs = list()
             for obj in objs:
-                hydrated_objs.append(cls.fromDict(obj))
+                hydrated_objs.append(cls.from_dict(obj))
             return hydrated_objs
         else:
             return objs
@@ -436,8 +436,8 @@ class BaseObject(BasePersistentObject):
         if type(obj_id) in [str, unicode]:
             obj_id = int(obj_id)
         if obj_id:
-            obj = Query(cls).where(_id=obj_id).fetchOne()
-            return (cls.fromDict(obj) if hydrate and obj else obj)
+            obj = Query(cls).where(_id=obj_id).fetch_one()
+            return (cls.from_dict(obj) if hydrate and obj else obj)
 
     @classmethod
     def find_by(cls, hydrate=True, **params):
@@ -446,20 +446,13 @@ class BaseObject(BasePersistentObject):
         if hydrate and objs:
             hydrated_objs = []
             for obj in objs:
-                hydrated_objs.append(cls.fromDict(obj))
+                hydrated_objs.append(cls.from_dict(obj))
             return hydrated_objs
         return objs
     
     @classmethod
     def find_one_by(cls, hydrate=True, **params):
         ''' Find the first object that matches the given parameters '''
-        obj = Query(cls).where(**params).fetchOne()
-        return cls.fromDict(obj) if hydrate and obj else obj
-
-
-if __name__ == "__main__":
-    
-    # Testing
-    from mongorm.test.test_base_object import TestBaseObject
-    TestBaseObject().run()
+        obj = Query(cls).where(**params).fetch_one()
+        return cls.from_dict(obj) if hydrate and obj else obj
     

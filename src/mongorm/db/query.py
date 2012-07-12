@@ -210,7 +210,7 @@ class Query:
         else:
             with QueryMonitor(self, "Get %sfrom" % ("%d fields " % len(self.selected_fields) if self.selected_fields else "")):
                 col = self._get_collection()
-                params = dict(map(lambda x: (x,1), self.selected_fields)) if self.selected_fields else None                    
+                params = dict(map(lambda x: (x, 1), self.selected_fields)) if self.selected_fields else None                    
                 res = col.find(self.conditions, params)
                 if self.distinct_field:
                     res = res.distinct(self.distinct_field)
@@ -279,10 +279,3 @@ class Query:
         self.insert_values = None
         self.distinct_field = None
         return self
-    
-
-if __name__ == "__main__":
-  
-    # Testing
-    from mongorm.test.test_query import TestQuery
-    TestQuery().run()
