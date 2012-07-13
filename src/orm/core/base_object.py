@@ -8,7 +8,7 @@ Created on Feb 20, 2012
 from time import time
 from types import InstanceType
 from __builtin__ import __import__
-from mongorm.db.query import Query
+from orm.db.query import Query
 from pyutils.utils.helpers import camel_to_py_case 
 import uuid
 import json

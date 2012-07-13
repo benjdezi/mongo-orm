@@ -4,8 +4,8 @@ Created on Jun 16, 2012
 @author: Benjamin Dezile
 '''
 
-from mongorm.db.database import Database
-from mongorm.db.query import Query
+from orm.db.database import Database
+from orm.db.query import Query
 import json
 
 class BaseObjectArray(list):

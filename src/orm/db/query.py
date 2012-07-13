@@ -7,7 +7,7 @@ Created on Mar 10, 2012
 
 from __future__ import with_statement
 
-from mongorm.db.database import Database
+from orm.db.database import Database
 from time import time
 import pymongo
 

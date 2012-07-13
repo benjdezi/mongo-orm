@@ -10,7 +10,7 @@ found in config/model.yml
 
 from cStringIO import StringIO
 from pyutils.utils.helpers import camel_to_py_case
-from mongorm.db.database import Database
+from orm.db.database import Database
 import os
 import datetime
 import traceback
