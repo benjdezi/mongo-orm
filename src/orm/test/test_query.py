@@ -6,8 +6,8 @@ Created on Jun 29, 2012
 '''
 
 from pyutils.lib.unit_test import TestSuite, test_case
-from mongorm.db.database import Database
-from mongorm.db.query import Query, DESCENDING
+from orm.db.database import Database
+from orm.db.query import Query, DESCENDING
 
 class TestQuery(TestSuite):
     ''' Test various types of queries '''

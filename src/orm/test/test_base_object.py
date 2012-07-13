@@ -6,7 +6,7 @@ Created on Jun 29, 2012
 '''
 
 from pyutils.lib.unit_test import TestSuite, test_case
-from mongorm.core.base_object import BaseObject
+from orm.core.base_object import BaseObject
 
 class TestBaseObject(TestSuite):
     ''' Test basic object functionalities '''
