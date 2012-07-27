@@ -89,9 +89,11 @@ class Database:
         return db[name]
         
     @classmethod
-    def build_indexes(cls, model_config):
+    def build_indexes(cls, model_config, no_print=False):
         ''' Build indexes '''
-        print "Building indexes"
+        
+        if not no_print:
+            print "Building indexes"
         
         for class_name in model_config.keys():
             
