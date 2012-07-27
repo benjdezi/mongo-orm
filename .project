@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>MongORM</name>
+	<name>mongo-orm</name>
 	<comment></comment>
 	<projects>
-		<project>Python-Utils</project>
+		<project>python-utils</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
