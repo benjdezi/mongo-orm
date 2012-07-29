@@ -33,16 +33,21 @@ class Database:
         user:      User name
         pwd:       Password
         '''
-        host = params.get('host', DEFAULT_HOST)
-        port = params.get('port', DEFAULT_PORT)
-        db_name = params.get('db_name')
-        user = params.get('user', None)
-        pwd = params.get('pwd', None)
-        cls.config = { 'host': host, 'port': port }
-        if cls.connection:
-            # Close existing connection
-            cls.connection.close()
-        return cls._init_db(db_name, user, pwd)
+        if params:
+            host = params.get('host', DEFAULT_HOST)
+            port = params.get('port', DEFAULT_PORT)
+            db_name = params.get('db_name')
+            user = params.get('user', None)
+            pwd = params.get('pwd', None)
+            cls.config = { 'host': host, 'port': port }
+            if cls.connection:
+                # Close existing connection
+                cls.connection.close()
+            return cls._init_db(db_name, user, pwd)
+        elif cls.db:
+            return cls.db
+        else:
+            raise DBInitError("Getting database instance with no parameters and no previous instance found")
     
     @classmethod
     def enable_query_logging(cls, is_enabled=True):
