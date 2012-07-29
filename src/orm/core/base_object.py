@@ -97,14 +97,14 @@ class Serializable(object):
 
     def to_json(self):
         ''' Return a JSON representation of this object '''
-        d = self.toDict()
+        d = self.to_dict()
         if d.has_key("id"):
             d["id"] = str(d["id"])
         return json.dumps(d, False, False) # False = not ensuring ascii
     
     def copy(self):
         ''' Return a copy of this object '''
-        d = self.toDict()
+        d = self.to_dict()
         cls = self.__class__
         o = cls.from_dict(d, True)
         return o
@@ -121,11 +121,11 @@ class Serializable(object):
                     # List of objects
                     l = list()
                     for item in val:
-                        l.append(item.toDict())
+                        l.append(item.to_dict())
                     values[k] = l
                 elif self._is_serializable(val):
                     # Serializable object
-                    values[k] = val.toDict()
+                    values[k] = val.to_dict()
                 elif t is str:
                     # String value
                     values[k] = unicode(val)
@@ -225,7 +225,7 @@ class BasePersistentObject(Serializable):
         ''' Assert whether this object is the same as the given instance '''
         if not inst or type(self) != type(inst):
             return False
-        return self.toDict() == inst.toDict()
+        return self.to_dict() == inst.to_dict()
     
     @classmethod
     def get_class_name(cls):
@@ -383,7 +383,7 @@ class BaseObject(BasePersistentObject):
         if not self._new:
             return self.update()
         else:
-            res = Query(self._col_name).insert(**self.toDict()).execute()
+            res = Query(self._col_name).insert(**self.to_dict()).execute()
             self._new = False
             return res
     
@@ -393,7 +393,7 @@ class BaseObject(BasePersistentObject):
         for k in self._change_set:
             val = self.__getattribute__(k)
             if hasattr(val, '_serializable'):
-                val = val.toDict()
+                val = val.to_dict()
             values[str(k)] = val
         return Query(self._col_name).where(_id=self.id).update(**values)
     
