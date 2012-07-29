@@ -55,8 +55,8 @@ class Query:
         t = type(collection)
         if t is str:
             self.col_name = collection
-        elif hasattr(collection, 'getClassName'):
-            self.col_name = collection.getClassName()
+        elif hasattr(collection, 'get_class_name'):
+            self.col_name = collection.get_class_name()
         else:
             raise Exception("Collection should be a string or a class extending BaseObject: %s" % t)
         
