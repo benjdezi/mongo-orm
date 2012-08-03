@@ -59,6 +59,7 @@ def build_model_class(class_path, class_name, class_info, overwrite=False):
     buf.write("from orm.core.base_object import " + root_class + "\n")
     buf.write("{{other_imports}}\n")
     buf.write("class Base" + class_name + "(" + root_class + "):\n")
+    buf.write("    ''' Base implementation for " + class_name +" '''\n")
     buf.write("\n")
     
     # Constructor
@@ -109,7 +110,8 @@ def build_model_class(class_path, class_name, class_info, overwrite=False):
         for field_name in field_names:
             field_info = fields[field_name]
             if field_info["required"] is True:
-                buf.write("        if self." + field_name + " is None: raise ValueError('" + class_name + "." + field_name + " is required')\n")
+                buf.write("        if self." + field_name + " is None:\n")
+                buf.write("            raise ValueError('" + class_name + "." + field_name + " is required')\n")
         buf.write("        " + root_class + ".save(self)\n")
     
     buf.write("\n")
