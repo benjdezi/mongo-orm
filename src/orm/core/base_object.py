@@ -299,7 +299,7 @@ class BaseObject(BasePersistentObject):
         else:
             params = dict()
             params[relation_name] = value
-            return related_cls.findOneBy(**params)
+            return related_cls.find_one_by(**params)
     
     def _set_related(self, related_obj, relation_name, foreign_relation_name=ID_ALIAS):
         ''' Set a relation value 
@@ -309,13 +309,13 @@ class BaseObject(BasePersistentObject):
         '''
         if related_obj is not None:
             if foreign_relation_name == ID_ALIAS:
-                ref = related_obj.getId()
+                ref = related_obj.get_id()
             else:
-                getter = getattr(related_obj, "get%s" % (foreign_relation_name[0].upper() + foreign_relation_name[1:]))
+                getter = getattr(related_obj, "get_%s" % foreign_relation_name)
                 ref = getter()
         else:
             ref = None
-        setter = getattr(self, "set%s" % (relation_name[0].upper() + relation_name[1:]))
+        setter = getattr(self, "set_%s" % relation_name)
         setter(ref)
         
     def _get_related_array(self, related_cls_name, values, relation_name=ID_ALIAS):
@@ -345,15 +345,15 @@ class BaseObject(BasePersistentObject):
         if related_objs:
             refs = list()
             if foreign_relation_name == ID_ALIAS:
-                getter_name = "getId"
+                getter_name = "get_id"
             else:
-                getter_name = "get%s" % (foreign_relation_name[0].upper() + foreign_relation_name[1:])
+                getter_name = "get_%s" % foreign_relation_name
             for related_obj in related_objs:
                 getter = getattr(related_obj, getter_name)
                 refs.append(getter())
         else:
             refs = None
-        setter = getattr(self, "set%s" % (relation_name[0].upper() + relation_name[1:]))
+        setter = getattr(self, "set_%s" % relation_name)
         setter(refs)
         
     
@@ -371,7 +371,7 @@ class BaseObject(BasePersistentObject):
     def refresh(self):
         ''' Sync this object with its persisted version '''
         if not self._new:
-            res = Query(self._col_name).where(_id=self.getId()).execute()
+            res = Query(self._col_name).where(_id=self.get_id()).execute()
             if not res or not res.count():
                 raise Exception("%s does not exist any more" % self)
             o = res[0]
@@ -403,7 +403,7 @@ class BaseObject(BasePersistentObject):
             # This object was never saved
             return
         if self._softdeletable is True:
-            self.setDeleted(int(time()))
+            self.set_deleted(int(time()))
             self.save()
         else:
             return Query(self._col_name).where(_id=self.id).delete()
