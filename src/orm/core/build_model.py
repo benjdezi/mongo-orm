@@ -168,7 +168,7 @@ def _make_setter_code(field_name, field_info):
 
 def _make_relational_getter_code(relation_name, relation_info):
     ''' Generate the code for a given relational getter '''
-    cls_name = relation_info["class"]
+    rel_cls_name = relation_info["class"]
     foreign_rel_name = relation_info["foreign"]
     if foreign_rel_name == "id":
         foreign_rel_name = "_id"
@@ -176,9 +176,9 @@ def _make_relational_getter_code(relation_name, relation_info):
     code = "    def get_" + camel_to_py_case(relation_name) + "(self):\n"
     code += "        ref = self.get_" + camel_to_py_case(local_rel_name) + "()\n"
     if relation_info.get("multi", False):
-        code += "        return self._get_related_array('%s', ref, '%s')" % (cls_name, foreign_rel_name)
+        code += "        return self._get_related_array('%s', ref, '%s')" % (rel_cls_name, foreign_rel_name)
     else:
-        code += "        return self._get_related('%s', ref, '%s')" % (cls_name, foreign_rel_name)
+        code += "        return self._get_related('%s', ref, '%s')" % (rel_cls_name, foreign_rel_name)
     code += "\n\n"
     return code
 
